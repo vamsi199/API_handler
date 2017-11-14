@@ -16,11 +16,18 @@ See output snapshot image for the exact layout.
 
 input:
 username,email,application, clientid, clientsecret, redirecturl
-Vamsi,vamsi@gmail.com,app1,client1,clientsecret1,redirecturl1
-ram,ram@gmail.com,app1,client1,clientsecret1,redirecturl1
-Vamsi,vamsi@gmail.com,app2,client2,clientsecret2,redirecturl2
-prasad,prasad@gmail.com,app2,client2,clientsecret2,redirecturl2
-sai,sai@gmail.com,app3,client3,clientsecret3,redirecturl3
+vamsi,vamsi@gmail.com,app1,client1,clientsecret1,redirecturl1
+ram,ram@gmail.com,app1,client2,clientsecret2,redirecturl2
+vamsi,vamsi@gmail.com,app2,client3,clientsecret3,redirecturl3
+ram,ram@gmail.com,app2,client4,clientsecret4,redirecturl4
+sai,sai@gmail.com,app3,client5,clientsecret5,redirecturl5
+
+Output:
+
+username,email,user status,applications created;application already exists
+vamsi,vamsi@gmail.com,user already exists,app2(client2);app1(client1)
+ram,ram@gmail.com,user created,app2(client4);app1(client2)
+sai,sai@gmail.com,user created,app3(client5);
 
 
 
