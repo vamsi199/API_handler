@@ -35,13 +35,16 @@ import (
 	"net/http"
 	//"os"
 	"encoding/csv"
+	//"os"
 )
+var appstatus string
+var userstatus string
 
 type user struct {
-	username, email []string
+	username, email string
 }
 type app struct {
-	application, clientid, clientsecret, redirecturl []string
+	application, clientid, clientsecret, redirecturl string
 }
 
 func main() {
@@ -49,6 +52,28 @@ func main() {
 	router.HandleFunc("/userdata", userhandler).Methods("POST")
 	http.ListenAndServe(":8080", router)
 
+}
+func (u user) userexists(user string) (userstatus string) {
+	if u.username == "vamsi" {
+		userstatus = "user already exists"
+		//fmt.Print(u.username, u.email, userstatus)
+	} else {
+		userstatus = "user not exits,create an account"
+		//fmt.Print(u.username, u.email, userstatus)
+	}
+	return
+
+}
+func (a app) appexists(app string) (appstatus string) {
+
+	if a.application == "app1" {
+		appstatus = "application already exists"
+		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
+	} else {
+		appstatus = "application not exits,create an application"
+		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
+	}
+	return
 }
 
 func userhandler(w http.ResponseWriter, r *http.Request) {
@@ -92,22 +117,32 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	fmt.Println(record)
+	//fmt.Println(record)
+	//var output []string
 
-	for i, usr := range record {
+	for _, usr := range record {
 		var u user
 		var a app
+		//var out string
+
 		//var us []user
 		//var ap []app
 
-		u.email[i] = usr[0]
-		u.username[i] = usr[1]
-		a.application[i] = usr[2]
-		a.clientid[i] = usr[3]
-		a.clientsecret[i] = usr[4]
-		a.redirecturl[i] = usr[5]
-		fmt.Println(u, a)
+		u.username = usr[0]
+		u.email = usr[1]
+		a.application = usr[2]
+		a.clientid = usr[3]
+		a.clientsecret = usr[4]
+		a.redirecturl = usr[5]
+		//fmt.Println(u)
+		//out = fmt.Sprintln(u.userexists(u.username), a.appexists(a.application))
+		//output = append(output, out)
+		//fmt.Println(output)
+		fmt.Println(u.username,",",u.email,",",fmt.Sprint(u.userexists(u.username)),",",a.application,",",fmt.Sprint(a.appexists(a.application)))
+
 
 	}
-	fmt.Println()
+	fmt.Fprint(w,"file received")
+
+
 }
