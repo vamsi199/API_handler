@@ -36,7 +36,9 @@ import (
 	//"os"
 	"encoding/csv"
 	//"os"
+	"os"
 )
+
 var appstatus string
 var userstatus string
 
@@ -77,36 +79,7 @@ func (a app) appexists(app string) (appstatus string) {
 }
 
 func userhandler(w http.ResponseWriter, r *http.Request) {
-	/*b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("cannot read the body", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 
-	}
-	fmt.Println(b)
-	s := string(b)
-	fmt.Println(s)
-
-	_, err = os.Create("input.txt")
-	if err != nil {
-		fmt.Println("cannot create the file", err)
-		return
-
-	}
-	f, err := os.OpenFile("input.txt", os.O_WRONLY, os.ModeAppend)
-	if err != nil {
-		fmt.Println("cannot open the file", err)
-		return
-
-	}
-	defer f.Close()
-	_, err = f.WriteString(s)
-	if err != nil {
-		fmt.Println("cannot write the content to the file", err)
-		return
-
-	}*/
 	reader := csv.NewReader(r.Body)
 	reader.Comma = ','
 	reader.Comment = '#'
@@ -117,16 +90,23 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	//fmt.Println(record)
-	//var output []string
+	_, err = os.Create("output.txt")
+	if err != nil {
+		fmt.Println("cannot create the file", err)
+		return
+	}
+	f, err := os.OpenFile("output.txt", os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		fmt.Println("cannot open the file", err)
+		return
+	}
+	defer f.Close()
 
-	for _, usr := range record {
+	for i, usr := range record {
+
 		var u user
 		var a app
-		//var out string
-
-		//var us []user
-		//var ap []app
+		var out string
 
 		u.username = usr[0]
 		u.email = usr[1]
@@ -134,15 +114,19 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		a.clientid = usr[3]
 		a.clientsecret = usr[4]
 		a.redirecturl = usr[5]
-		//fmt.Println(u)
-		//out = fmt.Sprintln(u.userexists(u.username), a.appexists(a.application))
-		//output = append(output, out)
-		//fmt.Println(output)
-		fmt.Println(u.username,",",u.email,",",fmt.Sprint(u.userexists(u.username)),",",a.application,",",fmt.Sprint(a.appexists(a.application)))
+		if i == 0 {
+			out=fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
+		} else {
+			out=fmt.Sprintln(u.username, ",", u.email, ",", fmt.Sprint(u.userexists(u.username)), ",", a.application, ",", fmt.Sprint(a.appexists(a.application)))
 
-
+		}
+		fmt.Println(out)
+		_, err = f.WriteString(out)
+		if err != nil {
+			fmt.Println("cannot write the content to the file", err)
+			return
+		}
 	}
-	fmt.Fprint(w,"file received")
-
+	fmt.Fprint(w, "file received")
 
 }
