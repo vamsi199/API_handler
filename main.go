@@ -14,6 +14,16 @@ Under the “applications already exists” field, list all the application for 
 The format for application list in above two is like this “<application> (<clientid>)”
 See output snapshot image for the exact layout.
 
+input:
+username,email,application, clientid, clientsecret, redirecturl
+Vamsi,vamsi@gmail.com,app1,client1,clientsecret1,redirecturl1
+ram,ram@gmail.com,app1,client1,clientsecret1,redirecturl1
+Vamsi,vamsi@gmail.com,app2,client2,clientsecret2,redirecturl2
+prasad,prasad@gmail.com,app2,client2,clientsecret2,redirecturl2
+sai,sai@gmail.com,app3,client3,clientsecret3,redirecturl3
+
+
+
 */
 
 package main
