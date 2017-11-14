@@ -14,62 +14,90 @@ Under the “applications already exists” field, list all the application for 
 The format for application list in above two is like this “<application> (<clientid>)”
 See output snapshot image for the exact layout.
 
- */
-
+*/
 
 package main
 
 import (
-	"net/http"
 	"fmt"
 	"github.com/gorilla/mux"
-	"io/ioutil"
-	"os"
+	//"io/ioutil"
+	"net/http"
+	//"os"
+	"encoding/csv"
 )
 
-type userdata struct {
-	username,email,application, clientid, clientsecret, redirecturl string
-
-
+type user struct {
+	username, email []string
+}
+type app struct {
+	application, clientid, clientsecret, redirecturl []string
 }
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/userdata",userhandler).Methods("POST")
-	http.ListenAndServe(":8080",router)
+	router.HandleFunc("/userdata", userhandler).Methods("POST")
+	http.ListenAndServe(":8080", router)
 
 }
 
-func userhandler(w http.ResponseWriter,r *http.Request) {
-	b,err :=ioutil.ReadAll(r.Body)
-	if err!=nil {
-		fmt.Println("cannot read the body",err)
-		http.Error(w,err.Error(),http.StatusInternalServerError)
+func userhandler(w http.ResponseWriter, r *http.Request) {
+	/*b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("cannot read the body", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 
 	}
 	fmt.Println(b)
-	s:=string(b)
+	s := string(b)
 	fmt.Println(s)
 
-
-	_,err=os.Create("input.txt")
-	if err!=nil {
-		fmt.Println("cannot create the file",err)
+	_, err = os.Create("input.txt")
+	if err != nil {
+		fmt.Println("cannot create the file", err)
 		return
 
 	}
-	f,err:=os.OpenFile("input.txt",os.O_WRONLY,os.ModeAppend)
-	if err!=nil {
-		fmt.Println("cannot open the file",err)
+	f, err := os.OpenFile("input.txt", os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		fmt.Println("cannot open the file", err)
 		return
 
 	}
 	defer f.Close()
-	_,err=f.WriteString(s)
-	if err!=nil {
-		fmt.Println("cannot write the content to the file",err)
+	_, err = f.WriteString(s)
+	if err != nil {
+		fmt.Println("cannot write the content to the file", err)
+		return
+
+	}*/
+	reader := csv.NewReader(r.Body)
+	reader.Comma = ','
+	reader.Comment = '#'
+	reader.FieldsPerRecord = 6
+	record, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println("cannot read csv file", err)
 		return
 
 	}
+	fmt.Println(record)
+
+	for i, usr := range record {
+		var u user
+		var a app
+		//var us []user
+		//var ap []app
+
+		u.email[i] = usr[0]
+		u.username[i] = usr[1]
+		a.application[i] = usr[2]
+		a.clientid[i] = usr[3]
+		a.clientsecret[i] = usr[4]
+		a.redirecturl[i] = usr[5]
+		fmt.Println(u, a)
+
+	}
+	fmt.Println()
 }
