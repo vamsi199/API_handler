@@ -68,30 +68,10 @@ func main() {
 	http.ListenAndServe(":8080", router)
 
 }
-func (u user) userexists(user string) (userstatus string) {
-	if u.username == "vamsi" {
-		userstatus = "user already exists"
-		//fmt.Print(u.username, u.email, userstatus)
-	} else {
-		userstatus = "user not exits,create an account"
-		//fmt.Print(u.username, u.email, userstatus)
-	}
-	return
-
-}
-func (a app) appexists(app string) (appstatus string) {
-
-	if a.application == "app1" {
-		appstatus = "application already exists"
-		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
-	} else {
-		appstatus = "application not exits,create an application"
-		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
-	}
-	return
-}
 
 func userhandler(w http.ResponseWriter, r *http.Request) {
+	var us users
+	var as apps
 
 	reader := csv.NewReader(r.Body)
 	reader.Comma = ','
@@ -119,8 +99,6 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 
 		var u user
 		var a app
-		var us users
-		var as apps
 		var out string
 
 		u.username = usr[0]
@@ -129,25 +107,99 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		a.clientid = usr[3]
 		a.clientsecret = usr[4]
 		a.redirecturl = usr[5]
+		us.usernames = append(us.usernames, u.username)
+		us.emails = append(us.emails, u.email)
+		as.applications = append(as.applications, a.application)
+		as.clientids = append(as.clientids, a.clientid)
+		as.clientsecrets = append(as.clientsecrets, a.clientsecret)
+		as.redirecturls = append(as.redirecturls, a.redirecturl)
+
 		if i == 0 {
-			out=fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
+			out = fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
 		} else {
-			out=fmt.Sprintln(u.username, ",", u.email, ",", fmt.Sprint(u.userexists(u.username)), ",", a.application, ",", fmt.Sprint(a.appexists(a.application)))
 
 		}
-		us.usernames =append(us.usernames,u.username)
-		us.emails=append(us.emails,u.email)
-		as.applications=append(as.applications,a.application)
-		as.clientids=append(as.clientids,a.clientid)
-		as.clientsecrets=append(as.clientsecrets,a.clientsecret)
-		as.redirecturls=append(as.redirecturls,a.redirecturl)
-		fmt.Println(out,as,us)
+
 		_, err = f.WriteString(out)
 		if err != nil {
 			fmt.Println("cannot write the content to the file", err)
 			return
 		}
 	}
+	us.usernames=us.removeDuplicates(us.usernames)
+	as.applications=as.removeDuplicates(as.applications)
+
+
+	//fmt.Println(us, as)
+	fmt.Println(us.usernames,as.applications)
 	fmt.Fprint(w, "file received")
 
+}
+func (u user) userexists(user string) (userstatus string) {
+	if u.username == "vamsi" {
+		userstatus = "user already exists"
+		//fmt.Print(u.username, u.email, userstatus)
+	} else {
+		userstatus = "user created"
+		u.createuser(u.username, u.email)
+		//fmt.Print(u.username, u.email, userstatus)
+	}
+	return
+
+}
+func (u user) createuser(username string, email string) {
+	//TODO: create user
+	return
+
+}
+func (a app) appexists(app string) (appstatus string) {
+
+	if a.application == "app1" {
+		appstatus = "application already exists"
+		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
+	} else {
+		appstatus = "applications created"
+		a.createapp(a.application, a.clientid, a.clientsecret, a.redirecturl)
+
+		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
+	}
+	return
+}
+func (a app) createapp(application, clientid, clientsecret, redirecturl string) {
+	//TODO: create application
+	return
+}
+func (us users) removeDuplicates(a []string) []string {
+	// Use map to record duplicates as we find them.
+	encountered := map[string]bool{}
+	result := []string{}
+	for i := range a {
+		if encountered[a[i]] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[a[i]] = true
+			// Append to result slice.
+			result = append(result, a[i])
+		}
+	}
+	// Return the new slice.
+	return result
+}
+func (as apps) removeDuplicates(a []string) []string {
+	// Use map to record duplicates as we find them.
+	encountered := map[string]bool{}
+	result := []string{}
+	for i := range a {
+		if encountered[a[i]] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[a[i]] = true
+			// Append to result slice.
+			result = append(result, a[i])
+		}
+	}
+	// Return the new slice.
+	return result
 }

@@ -1,6 +1,1 @@
 username , email , user status , application , application status
-vamsi , vamsi@gmail.com , user already exists , app1 , application already exists
-ram , ram@gmail.com , user not exits,create an account , app1 , application already exists
-vamsi , vamsi@gmail.com , user already exists , app2 , application not exits,create an application
-ram , ram@gmail.com , user not exits,create an account , app2 , application not exits,create an application
-vamsi , vamsi@gmail.com , user already exists , app3 , application not exits,create an application
