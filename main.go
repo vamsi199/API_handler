@@ -56,6 +56,7 @@ type user struct {
 type usersdata struct {
 	usernames, emails ,applications, clientids, clientsecrets, redirecturls []string
 }
+
 type usersdatam struct {
 	usernamesm, emailsm ,applicationsm, clientidsm, clientsecretsm, redirecturlsm []map[string]string
 }
@@ -65,16 +66,15 @@ type app struct {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/userdata", userhandler).Methods("POST")
+	router.HandleFunc("/import", importUserApplicationHandler).Methods("POST")
 	http.ListenAndServe(":8080", router)
 
 }
-//handler function to route "/userdata"
+//this does all the job
+func importUserApplicationHandler(w http.ResponseWriter, r *http.Request){//(c *gin.Context) {
 
-func userhandler(w http.ResponseWriter, r *http.Request) {
-	var us usersdata
-	var usm usersdatam
-//To read the input file from request body
+	// read the input file
+
 	reader := csv.NewReader(r.Body)
 	reader.Comma = ','
 	reader.Comment = '#'
@@ -83,9 +83,9 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("cannot read csv file", err)
 		return
-
 	}
-//Generate the empty output file
+
+	// generate empty output file
 	_, err = os.Create("output.txt")
 	if err != nil {
 		fmt.Println("cannot create the file", err)
@@ -97,8 +97,8 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
-// Process the data and to store in struct
 
+	// process each record
 	for i, usr := range record {
 
 		var u user
@@ -111,36 +111,29 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		a.clientid = usr[3]
 		a.clientsecret = usr[4]
 		a.redirecturl = usr[5]
-		us.usernames = append(us.usernames, u.username)
-		us.emails = append(us.emails, u.email)
-		us.applications = append(us.applications, a.application)
-		us.clientids = append(us.clientids, a.clientid)
-		us.clientsecrets = append(us.clientsecrets, a.clientsecret)
-		us.redirecturls = append(us.redirecturls, a.redirecturl)
-		//--------------------------Error: Cannot pass the string to slice of map
-		usm.usernamesm["username"] = u.username
-
-		if i == 0 {
+		if i == 0 { // add header
 			out = fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
-		} else {
-         //TODO: write the output for remaining
+		} else { // add data records
+			//out = fmt.Sprintln(u.username, ",", u.email, ",", ",", a.application, ",", fmt.Sprint(a.appexists(a.application)))
 		}
+		fmt.Println(out)
 
-		_, err = f.WriteString(out)
-		if err != nil {
-			fmt.Println("cannot write the content to the file", err)
-			return
-		}
 	}
-	//us.usernames=us.removeDuplicates(us.usernames)
-	//us.applications=us.removeDuplicates(us.applications)
 
+	// TODO: process the records
 
-	//fmt.Println(us, as)
-	fmt.Println(us.usernames,us.applications)
-	fmt.Fprint(w, "file received")
+	// generate final output
+
+	// send output to client
+	// data := services.ExportSelectedDevicesAsCSV(token, deviceIDs)
+
+	// mlog.Debug("%s response = %s", METHOD_NAME, string(data.Bytes()))
+
+	// c.Header("Content-Disposition", "attachment; filename=devices.csv")
+	// c.Data(http.StatusOK, "text/csv", data.Bytes()) // text/csv
 
 }
+
 func (u user) userexists(user string) (userstatus string) {
 	if u.username == "vamsi" {
 		userstatus = "user already exists"
