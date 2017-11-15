@@ -39,39 +39,40 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	//"io/ioutil"
+	"github.com/gocarina/gocsv"
 	"net/http"
-	//"os"
-	"encoding/csv"
-	//"os"
 	"os"
+	"strings"
+	"encoding/csv"
 )
 
-var appstatus string
-var userstatus string
-
 type user struct {
-	username, email  string
-}
-type usersdata struct {
-	usernames, emails ,applications, clientids, clientsecrets, redirecturls []string
-}
-
-type usersdatam struct {
-	usernamesm, emailsm ,applicationsm, clientidsm, clientsecretsm, redirecturlsm []map[string]string
+	username string `csv:"username"`
+	email    string `csv:"email"`
 }
 type app struct {
 	application, clientid, clientsecret, redirecturl string
+}
+type userApp struct {
+	user
+	apps []app
+}
+type userAppOutput struct {
+	user
+	userStatus               string `csv:"user status"`
+	applicationsCreated      string `csv:"applications created"`
+	applicationsAlreadyExist string `csv:"application already exists"`
 }
 
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/import", importUserApplicationHandler).Methods("POST")
-	http.ListenAndServe(":8080", router)
-
+	http.ListenAndServe(":8089", router)
 }
+
+
 //this does all the job
-func importUserApplicationHandler(w http.ResponseWriter, r *http.Request){//(c *gin.Context) {
+func importUserApplicationHandler(w http.ResponseWriter, r *http.Request) { //(c *gin.Context) {
 
 	// read the input file
 
@@ -98,33 +99,68 @@ func importUserApplicationHandler(w http.ResponseWriter, r *http.Request){//(c *
 	}
 	defer f.Close()
 
+	userApps := map[string]userApp{} // map of username to user data
 	// process each record
-	for i, usr := range record {
+	for _, r := range record {
 
-		var u user
 		var a app
-		var out string
+		var ua userApp
 
-		u.username = usr[0]
-		u.email = usr[1]
-		a.application = usr[2]
-		a.clientid = usr[3]
-		a.clientsecret = usr[4]
-		a.redirecturl = usr[5]
-		if i == 0 { // add header
-			out = fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
-		} else { // add data records
-			//out = fmt.Sprintln(u.username, ",", u.email, ",", ",", a.application, ",", fmt.Sprint(a.appexists(a.application)))
-		}
-		fmt.Println(out)
+		ua.username = r[0]
+		ua.email = r[1]
+		a.application = r[2]
+		a.clientid = r[3]
+		a.clientsecret = r[4]
+		a.redirecturl = r[5]
 
+		ua.apps = append(userApps[ua.username].apps, a)
+		userApps[ua.username] = ua
 	}
 
 	// TODO: process the records
+	output := []userAppOutput{}
+	for _, ua := range userApps { // for each of the users
+		//process user data
+		// check if user already exists
+		out := userAppOutput{}
+		out.username = ua.username
+		if ua.user.exists() {
+			out.userStatus = "user already exists"
+		} else {
+			out.userStatus = "user created"
+		}
+		// process application data
+		applicationsCreated := []string{}
+		applicationsAlreadyExist := []string{}
+		for _, a := range ua.apps { // for each of the users' apps
+			// check of the app exists, and process data accordingly
+			if a.exists(ua.username) {
+				applicationsAlreadyExist = append(applicationsAlreadyExist, a.application+"("+a.clientid+")")
+			} else {
+				err := a.create(ua.username)
+				if err != nil {
+					//TODO: return error to client using http.Error()
+					return
+				}
+				applicationsCreated = append(applicationsCreated, a.application+"("+a.clientid+")")
+			}
+		}
+		out.applicationsCreated = strings.Join(applicationsCreated, ";")
+		out.applicationsAlreadyExist = strings.Join(applicationsAlreadyExist, ";")
+		output = append(output, out)
+	}
 
-	// generate final output
+	// generate final output file and send output to client
+	err = gocsv.Marshal(output, w)
+	if err != nil{
+		//TODO
+		return
+	}
 
-	// send output to client
+	w.Header().Set("Content-Disposition", "attachment; filename=devices.csv")
+	w.Header().Set("Content-Type","text/csv")
+
+	//
 	// data := services.ExportSelectedDevicesAsCSV(token, deviceIDs)
 
 	// mlog.Debug("%s response = %s", METHOD_NAME, string(data.Bytes()))
@@ -134,72 +170,22 @@ func importUserApplicationHandler(w http.ResponseWriter, r *http.Request){//(c *
 
 }
 
-func (u user) userexists(user string) (userstatus string) {
-	if u.username == "vamsi" {
-		userstatus = "user already exists"
-		//fmt.Print(u.username, u.email, userstatus)
-	} else {
-		userstatus = "user created"
-		u.createuser(u.username, u.email)
-		//fmt.Print(u.username, u.email, userstatus)
-	}
-	return
-
+func (u user) exists() bool {
+	return u.username == "vamsi"
 }
-func (u user) createuser(username string, email string) {
+func (u user) create() error {
 	//TODO: create user
-	return
-
+	return nil
 }
-func (a app) appexists(app string) (appstatus string) {
 
-	if a.application == "app1" {
-		appstatus = "application already exists"
-		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
-	} else {
-		appstatus = "applications created"
-		a.createapp(a.application, a.clientid, a.clientsecret, a.redirecturl)
-
-		//fmt.Print(a.application, a.clientid, a.clientsecret, a.redirecturl, appstatus)
-	}
-	return
+func (a app) exists(username string) bool {
+	return a.application == "app1"
 }
-func (a app) createapp(application, clientid, clientsecret, redirecturl string) {
+func (a app) create(username string) error { // NOTE: dont need to pass all the fields again, as this is a method, all the values will be available using the  receiver object, i.e. 'a'a in this case.
 	//TODO: create application
-	return
+	return nil
 }
-func (us usersdata) removeDuplicates(usernames, emails ,applications, clientids []string) (username,email,user_status,applications_created,application_already_exists []string) {
-	// Use map to record duplicates as we find them.
-	encountered := map[string]bool{}
-	result := []string{}
-	for i := range usernames {
-		if encountered[usernames[i]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[usernames[i]] = true
 
-			// Append to result slice.
-			result = append(result, usernames[i])
-		}
-	}
-	// Return the new slice.
-	return
-}
-/*func (as apps) removeDuplicates(a []string) []string {
-	// Use map to record duplicates as we find them.
-	encountered := map[string]bool{}
-	result := []string{}
-	for i := range a {
-		if encountered[a[i]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[a[i]] = true
-			// Append to result slice.
-			result = append(result, a[i])
-		}
-	}
-	// Return the new slice.
-	return result
-}*/
+//// NOTES
+// user duplicate will no longer exist as we are using maps. maps will overwrite if same key is passed again. and we are appending the apps, so we are good here
+// app duplicates will not exist. we can go with this assumption
