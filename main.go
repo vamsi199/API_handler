@@ -21,13 +21,14 @@ ram,ram@gmail.com,app1,client2,clientsecret2,redirecturl2
 vamsi,vamsi@gmail.com,app2,client3,clientsecret3,redirecturl3
 ram,ram@gmail.com,app2,client4,clientsecret4,redirecturl4
 sai,sai@gmail.com,app3,client5,clientsecret5,redirecturl5
+vamsi,vamsi@gmail.com,app4,client6,clientsecret6,redirecturl6
 
 Output:
 
-username,email,user status,applications created;application already exists
-vamsi,vamsi@gmail.com,user already exists,app2(client2);app1(client1)
-ram,ram@gmail.com,user created,app2(client4);app1(client2)
-sai,sai@gmail.com,user created,app3(client5);
+username,email,user status,applications created,application already exists
+vamsi,vamsi@gmail.com,user already exists,app2(client2);app4(client6),app1(client1)
+ram,ram@gmail.com,user created,app2(client4),app1(client2)
+sai,sai@gmail.com,user created,app3(client5),
 
 
 
@@ -179,6 +180,7 @@ func (us users) removeDuplicates(a []string) []string {
 		} else {
 			// Record this element as an encountered element.
 			encountered[a[i]] = true
+
 			// Append to result slice.
 			result = append(result, a[i])
 		}
