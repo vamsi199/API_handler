@@ -52,8 +52,14 @@ var userstatus string
 type user struct {
 	username, email string
 }
+type users struct {
+	usernames, emails []string
+}
 type app struct {
 	application, clientid, clientsecret, redirecturl string
+}
+type apps struct {
+	applications, clientids, clientsecrets, redirecturls []string
 }
 
 func main() {
@@ -113,6 +119,8 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 
 		var u user
 		var a app
+		var us users
+		var as apps
 		var out string
 
 		u.username = usr[0]
@@ -127,7 +135,13 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 			out=fmt.Sprintln(u.username, ",", u.email, ",", fmt.Sprint(u.userexists(u.username)), ",", a.application, ",", fmt.Sprint(a.appexists(a.application)))
 
 		}
-		fmt.Println(out)
+		us.usernames =append(us.usernames,u.username)
+		us.emails=append(us.emails,u.email)
+		as.applications=append(as.applications,a.application)
+		as.clientids=append(as.clientids,a.clientid)
+		as.clientsecrets=append(as.clientsecrets,a.clientsecret)
+		as.redirecturls=append(as.redirecturls,a.redirecturl)
+		fmt.Println(out,as,us)
 		_, err = f.WriteString(out)
 		if err != nil {
 			fmt.Println("cannot write the content to the file", err)
