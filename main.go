@@ -51,16 +51,16 @@ var appstatus string
 var userstatus string
 
 type user struct {
-	username, email string
+	username, email  string
 }
-type users struct {
-	usernames, emails []string
+type usersdata struct {
+	usernames, emails ,applications, clientids, clientsecrets, redirecturls []string
+}
+type usersdatam struct {
+	usernamesm, emailsm ,applicationsm, clientidsm, clientsecretsm, redirecturlsm []map[string]string
 }
 type app struct {
 	application, clientid, clientsecret, redirecturl string
-}
-type apps struct {
-	applications, clientids, clientsecrets, redirecturls []string
 }
 
 func main() {
@@ -69,11 +69,12 @@ func main() {
 	http.ListenAndServe(":8080", router)
 
 }
+//handler function to route "/userdata"
 
 func userhandler(w http.ResponseWriter, r *http.Request) {
-	var us users
-	var as apps
-
+	var us usersdata
+	var usm usersdatam
+//To read the input file from request body
 	reader := csv.NewReader(r.Body)
 	reader.Comma = ','
 	reader.Comment = '#'
@@ -84,6 +85,7 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+//Generate the empty output file
 	_, err = os.Create("output.txt")
 	if err != nil {
 		fmt.Println("cannot create the file", err)
@@ -95,6 +97,7 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
+// Process the data and to store in struct
 
 	for i, usr := range record {
 
@@ -110,15 +113,17 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 		a.redirecturl = usr[5]
 		us.usernames = append(us.usernames, u.username)
 		us.emails = append(us.emails, u.email)
-		as.applications = append(as.applications, a.application)
-		as.clientids = append(as.clientids, a.clientid)
-		as.clientsecrets = append(as.clientsecrets, a.clientsecret)
-		as.redirecturls = append(as.redirecturls, a.redirecturl)
+		us.applications = append(us.applications, a.application)
+		us.clientids = append(us.clientids, a.clientid)
+		us.clientsecrets = append(us.clientsecrets, a.clientsecret)
+		us.redirecturls = append(us.redirecturls, a.redirecturl)
+		//--------------------------Error: Cannot pass the string to slice of map
+		usm.usernamesm["username"] = u.username
 
 		if i == 0 {
 			out = fmt.Sprintln(u.username, ",", u.email, ",", "user status", ",", a.application, ",", "application status")
 		} else {
-
+         //TODO: write the output for remaining
 		}
 
 		_, err = f.WriteString(out)
@@ -127,12 +132,12 @@ func userhandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	us.usernames=us.removeDuplicates(us.usernames)
-	as.applications=as.removeDuplicates(as.applications)
+	//us.usernames=us.removeDuplicates(us.usernames)
+	//us.applications=us.removeDuplicates(us.applications)
 
 
 	//fmt.Println(us, as)
-	fmt.Println(us.usernames,as.applications)
+	fmt.Println(us.usernames,us.applications)
 	fmt.Fprint(w, "file received")
 
 }
@@ -170,25 +175,25 @@ func (a app) createapp(application, clientid, clientsecret, redirecturl string) 
 	//TODO: create application
 	return
 }
-func (us users) removeDuplicates(a []string) []string {
+func (us usersdata) removeDuplicates(usernames, emails ,applications, clientids []string) (username,email,user_status,applications_created,application_already_exists []string) {
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}
 	result := []string{}
-	for i := range a {
-		if encountered[a[i]] == true {
+	for i := range usernames {
+		if encountered[usernames[i]] == true {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
-			encountered[a[i]] = true
+			encountered[usernames[i]] = true
 
 			// Append to result slice.
-			result = append(result, a[i])
+			result = append(result, usernames[i])
 		}
 	}
 	// Return the new slice.
-	return result
+	return
 }
-func (as apps) removeDuplicates(a []string) []string {
+/*func (as apps) removeDuplicates(a []string) []string {
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}
 	result := []string{}
@@ -204,4 +209,4 @@ func (as apps) removeDuplicates(a []string) []string {
 	}
 	// Return the new slice.
 	return result
-}
+}*/
