@@ -1,90 +1,16 @@
-/*
-
-input:
-[
-   {
-      "username":"usr1",
-      "email":"usr1@gmail.com",
-      "apps":[
-         {
-            "clientid":"client1",
-            "clientsecret":"hj;l",
-            "name":"app1",
-            "redirecturl":"http://werewr.com"
-         },
-         {
-            "clientid":"client2",
-            "clientsecret":"hj;l",
-            "name":"app2",
-            "redirecturl":"http://werewr.com"
-         },
-         {
-            "clientid":"client6",
-            "clientsecret":"hj;l",
-            "name":"app4",
-            "redirecturl":"http://werewr.com"
-         }
-      ]
-   },
-   {
-      "username":"usr2",
-      "email":"usr2@gmail.com",
-      "apps":[
-         {
-            "clientid":"client2",
-            "clientsecret":"hj;l",
-            "name":"app1",
-            "redirecturl":"http://werewr.com"
-         },
-         {
-            "clientid":"client4",
-            "clientsecret":"hj;l",
-            "name":"app2",
-            "redirecturl":"http://werewr.com"
-         }
-      ]
-   },
-   {
-      "username":"usr3",
-      "email":"usr3@gmail.com",
-      "apps":[
-         {
-            "clientid":"client5",
-            "clientsecret":"hj;l",
-            "name":"app3",
-            "redirecturl":"http://werewr.com"
-         }
-      ]
-   }
-]
-
-Output:
-
-username,email,user status,applications created,application already exists
-usr1,usr1@gmail.com,user already exists,app2(client2);app4(client6),app1(client1)
-usr2,usr2@gmail.com,user created,app2(client4),app1(client2)
-usr3,usr3@gmail.com,user created,app3(client5),
-
-
-
-*/
-
 package main
 
 import (
-	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"github.com/gocarina/gocsv"
 	"github.com/gorilla/mux"
 	"net/http"
-	"os"
 	"strings"
 )
 
 type user struct {
-	Username     string `csv:"username" json:"username"`
-	Email        string `csv:"email" json:"email"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
 	responseCode int
 }
 type app struct {
@@ -96,10 +22,11 @@ type app struct {
 }
 type userApp struct {
 	user
-	apps []app
+	Apps []app
 }
 type userAppOutput struct {
-	user
+	Username                 string `csv:"username"`
+	Email                    string `csv:"email"`
 	UserStatus               string `csv:"user status"`
 	ApplicationsCreated      string `csv:"applications created"`
 	ApplicationsAlreadyExist string `csv:"application already exists"`
@@ -124,6 +51,7 @@ func importUserApplicationHandler(w http.ResponseWriter, r *http.Request) { //(c
 	err := json.NewDecoder(r.Body).Decode(&uas)
 	if err != nil {
 		//TODO
+		return
 	}
 	defer r.Body.Close()
 
@@ -134,27 +62,31 @@ func importUserApplicationHandler(w http.ResponseWriter, r *http.Request) { //(c
 		// check if user already exists
 		out := userAppOutput{}
 		out.Username = ua.Username
+		out.Email = ua.Email
 		resp, err := ua.user.create()
-		if err != nil{
+		if err != nil {
 			//TODO
+			return
 		}
 		if resp == StatusAlreadyExists {
 			out.UserStatus = "user already exists"
-		} else if resp == StatusCreated{
+		} else if resp == StatusCreated {
 			out.UserStatus = "user created"
 		}
 		// process application data
 		applicationsCreated := []string{}
 		applicationsAlreadyExist := []string{}
-		for _, a := range ua.apps { // for each of the users' apps
+		for _, a := range ua.Apps { // for each of the users' apps
 			// check of the app exists, and process data accordingly
 			resp, err = a.create(ua.Username)
-			if err != nil{
+
+			if err != nil {
 				//TODO
+				return
 			}
-			if resp == StatusAlreadyExists{
+			if resp == StatusAlreadyExists {
 				applicationsAlreadyExist = append(applicationsAlreadyExist, a.Name+"("+a.ClientID+")")
-			} else if resp ==StatusCreated {
+			} else if resp == StatusCreated {
 				applicationsCreated = append(applicationsCreated, a.Name+"("+a.ClientID+")")
 			}
 		}
@@ -185,10 +117,17 @@ func importUserApplicationHandler(w http.ResponseWriter, r *http.Request) { //(c
 
 func (u user) create() (int, error) {
 	//TODO: create user. call the api with required data and send the status code and error back
-	return 201, nil
+	if u.Username == "usr1" {
+		return StatusAlreadyExists, nil
+	} else {
+		return StatusCreated, nil
+	}
 }
 
 func (a app) create(username string) (int, error) {
 	//TODO: create application. call the api with required data and send the status code and error back
-	return 201, nil
+	if a.Name == "app1" || a.Name == "app5" {
+		return StatusAlreadyExists, nil
+	}
+	return StatusCreated, nil
 }

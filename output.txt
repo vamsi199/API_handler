@@ -1,1 +1,4 @@
-username , email , user status , application , application status
+username,email,user status,applications created,application already exists
+usr1,usr1@gmail.com,user already exists,app2(client2);app3(client3),app1(client1)
+usr2,usr2@gmail.com,user created,app4(client4),app5(client5)
+usr3,usr3@gmail.com,user created,app6(client6),
